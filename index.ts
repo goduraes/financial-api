@@ -13,6 +13,6 @@ app.get('/', (req: Request, res: Response) => res.json({ message: 'API funcionan
 app.use('/users', userRoutes);
 app.use('/auth', authRoutes);
 
-app.listen(process.env.PORT, () => {
+app.listen(process.env.PORT || 3000, () => {
   console.log(`Servidor rodando em http://localhost:${process.env.PORT}`);
 });
