@@ -18,7 +18,7 @@ router.post('/', async (req: Request, res: Response) => {
         const isMatch = await bcrypt.compare(password, row.password);
         if (!isMatch) return res.status(401).json({ error: 'Invalid password' });
     
-        const userPayload = { name: row.name, email: row.email, role: row.role };
+        const userPayload = { id: row.id, name: row.name, email: row.email, role: row.role };
         const token = jwt.sign(userPayload, process.env.JWTSECRETKEY, { expiresIn: '1h' });
         
         res.json({ data: { token: token } });
