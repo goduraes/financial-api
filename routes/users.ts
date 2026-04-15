@@ -8,25 +8,54 @@ const bcrypt = require('bcryptjs');
 
 // All users
 router.get('/', async (req: Request, res: Response) => {
-    const { page, perPage, search } = req.query;
-
+    const { page = 1, perPage = 10, search = '' } = req.query;
+  
+    const limit = Number(perPage);
+    const currentPage = Number(page);
+    const offset = (currentPage - 1) * limit;
+  
     try {
-        const { rows }: any = await pool.query(`
-            SELECT id, name, email, role
-            FROM users
-            WHERE 
-                name ILIKE '%' || $1 || '%'
-                OR email ILIKE '%' || $1 || '%'
-            ORDER BY id
-            LIMIT $2
-            OFFSET $3;
-        `, [search || '', perPage || 10, page || 0]);
-        if (!rows.length) return res.status(404).json({ error: 'Users not found' });
-        return res.json({ data: rows });
+      // 🔢 total de registros
+      const countResult = await pool.query(
+        `
+        SELECT COUNT(*) 
+        FROM users
+        WHERE 
+          name ILIKE '%' || $1 || '%'
+          OR email ILIKE '%' || $1 || '%'
+        `,
+        [search]
+      );
+  
+      const total = Number(countResult.rows[0].count);
+  
+      // 📄 dados paginados
+      const { rows } = await pool.query(
+        `
+        SELECT id, name, email, role
+        FROM users
+        WHERE 
+          name ILIKE '%' || $1 || '%'
+          OR email ILIKE '%' || $1 || '%'
+        ORDER BY id
+        LIMIT $2
+        OFFSET $3;
+        `,
+        [search, limit, offset]
+      );
+  
+      return res.json({
+        data: rows,
+        page: currentPage,
+        perPage: limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      });
+  
     } catch (error: any) {
-       return res.status(500).json({ error: error.message });
+      return res.status(500).json({ error: error.message });
     }
-});
+  });
 
 // User by id
 router.get('/:id', authMiddleware(true), async (req: Request, res: Response) => {
