@@ -1,21 +1,16 @@
 import { Request, Response, NextFunction } from 'express';
+import { extractBearerToken } from '../helpers/extractBearerToken';
 
 const jwt = require('jsonwebtoken');
 
 const authMiddleware = (onlyAdmin = false) => {
     return (req: Request, res: Response, next: NextFunction) => {
-        const authHeader = req.headers.authorization;
-        if (!authHeader) return res.status(401).send({ error: 'Token not provided' });
+        const result = extractBearerToken(req.headers.authorization);
+        if ("error" in result) return res.status(401).json({ error: result.error });
 
-        const parts = authHeader.split(' ');
-        if (parts.length !== 2) return res.status(401).send({ error: 'Token error' });
-
-        const [scheme, token] = parts;
-        if (!/^Bearer$/i.test(scheme)) return res.status(401).send({ error: 'Malformatted token' });
-
-        jwt.verify(token, process.env.JWTSECRETKEY, (err: any, decoded: any) => {
-            if (onlyAdmin && decoded.role !== "ADMIN") return res.status(401).send({ error: 'You are not allowed' });
-            if (err) return res.status(401).send({ error: 'Invalid token' });
+        jwt.verify(result.token, process.env.JWTSECRETKEY, (err: any, decoded: any) => {
+            if (err || !decoded) return res.status(403).send({ error: 'Invalid token' });
+            if (onlyAdmin && decoded.role !== "ADMIN") return res.status(403).send({ error: 'You are not allowed' });
             // req.userId = decoded.id; // Define o ID do usuário para uso posterior
             return next();
         });

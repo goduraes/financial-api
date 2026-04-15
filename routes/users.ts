@@ -9,7 +9,7 @@ const bcrypt = require('bcryptjs');
 // All users
 router.get('/', authMiddleware(true), async (req: Request, res: Response) => {
     try {
-        const { rows }: any = await pool.query('SELECT * FROM users');
+        const { rows }: any = await pool.query('SELECT id, name, email, role FROM users');
         if (!rows.length) return res.status(404).json({ error: 'Users not found' });
         return res.json({ data: rows });
     } catch (error: any) {
@@ -18,22 +18,22 @@ router.get('/', authMiddleware(true), async (req: Request, res: Response) => {
 });
 
 // User by id
-router.get('/:id', authMiddleware, async (req: Request, res: Response) => {
+router.get('/:id', authMiddleware(true), async (req: Request, res: Response) => {
     try {
-        const { rows }: any = await pool.query('SELECT * FROM users WHERE id = $1', [req.params.id]);
+        const { rows }: any = await pool.query('SELECT id, name, email, role FROM users WHERE id = $1', [req.params.id]);
         if (!rows.length) return res.status(404).json({ error: 'Users not found' });
-        res.json({ data: rows[0] });
+        return res.json({ data: rows[0] });
     } catch (error: any) {
         return res.status(500).json({ error: error.message });
     }
 });
 
 // User by email
-router.get('/:email', authMiddleware, async (req: Request, res: Response) => {
+router.get('/:email', authMiddleware(true), async (req: Request, res: Response) => {
     try {
-        const { rows }: any = await pool.query('SELECT * FROM users WHERE email = $1', [req.params.email]);
+        const { rows }: any = await pool.query('SELECT id, name, email, role FROM users WHERE email = $1', [req.params.email]);
         if (!rows.length) return res.status(404).json({ error: 'Users not found' });
-        res.json({ data: rows[0] });
+        return res.json({ data: rows[0] });
     } catch (error: any) {
         return res.status(500).json({ error: error.message });
     }
@@ -57,11 +57,11 @@ router.post('/add', async (req: Request, res: Response) => {
 });
 
 // Remove user
-router.delete('/:id', authMiddleware, async (req: Request, res: Response) => {
+router.delete('/:id', authMiddleware(true), async (req: Request, res: Response) => {
     try {
         const { rows }: any = await pool.query('DELETE FROM users WHERE id = $1', [req.params.id]);
         if (!rows.length) return res.status(500).json({ error: 'Could not retrieve affected row count' });
-        return res.json({ message: 'Deleted successfully', rowsAffected: rows[0] });
+        return res.json({ message: 'Deleted successfully', rowsAffectedId: rows[0].id });
     } catch (error: any) {
         return res.status(500).json({ error: error.message });
     }
