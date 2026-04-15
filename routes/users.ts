@@ -7,9 +7,20 @@ import pool from '../db';
 const bcrypt = require('bcryptjs');
 
 // All users
-router.get('/', authMiddleware(true), async (req: Request, res: Response) => {
+router.get('/', async (req: Request, res: Response) => {
+    const { page, perPage, search } = req.query;
+
     try {
-        const { rows }: any = await pool.query('SELECT id, name, email, role FROM users');
+        const { rows }: any = await pool.query(`
+            SELECT id, name, email, role
+            FROM users
+            WHERE 
+                name ILIKE '%' || $1 || '%'
+                OR email ILIKE '%' || $1 || '%'
+            ORDER BY id
+            LIMIT $2
+            OFFSET $3;
+        `, [search || '', perPage || 10, page || 0]);
         if (!rows.length) return res.status(404).json({ error: 'Users not found' });
         return res.json({ data: rows });
     } catch (error: any) {
