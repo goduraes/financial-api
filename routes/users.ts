@@ -60,9 +60,10 @@ router.get('/', async (req: Request, res: Response) => {
 // User by id
 router.get('/:id', authMiddleware(true), async (req: Request, res: Response) => {
     try {
-        const { rows }: any = await pool.query('SELECT id, name, email, role, created_at, updated_at FROM users WHERE id = $1', [req.params.id]);
+        const { rows }: any = await pool.query('SELECT * FROM users WHERE id = $1', [req.params.id]);
         if (!rows.length) return res.status(404).json({ error: 'Users not found' });
-        return res.json({ data: rows[0] });
+        const { password, ...data} = rows[0];
+        return res.json({ data: data });
     } catch (error: any) {
         return res.status(500).json({ error: error.message });
     }
@@ -71,9 +72,10 @@ router.get('/:id', authMiddleware(true), async (req: Request, res: Response) => 
 // User by email
 router.get('/:email', authMiddleware(true), async (req: Request, res: Response) => {
     try {
-        const { rows }: any = await pool.query('SELECT id, name, email, role, created_at, updated_at FROM users WHERE email = $1', [req.params.email]);
+        const { rows }: any = await pool.query('SELECT * FROM users WHERE email = $1', [req.params.email]);
         if (!rows.length) return res.status(404).json({ error: 'Users not found' });
-        return res.json({ data: rows[0] });
+        const { password, ...data} = rows[0];
+        return res.json({ data: data });
     } catch (error: any) {
         return res.status(500).json({ error: error.message });
     }
@@ -90,7 +92,8 @@ router.post('/add', async (req: Request, res: Response) => {
         if (user.rows.length) return res.status(409).json({ message: 'E-mail já cadastrado!' });
         const { rows } = await pool.query('INSERT INTO users (name, email, password, created_at) VALUES ($1, $2, $3, $4) RETURNING *', [name, email, hashedPassword, new Date()]);
         if (!rows.length) return res.status(500).json({ error: 'Could not retrieve inserted row id' });
-        return res.status(201).json({ id: rows[0], message: 'Row added successfully' });
+        const { password, ...data} = rows[0];
+        return res.status(201).json({ data: data, message: 'Row added successfully' });
     } catch (error: any) {
         return res.status(500).json({ error: error.message });
     }
@@ -101,7 +104,8 @@ router.delete('/:id', authMiddleware(true), async (req: Request, res: Response) 
     try {
         const { rows }: any = await pool.query('DELETE FROM users WHERE id = $1', [req.params.id]);
         if (!rows.length) return res.status(500).json({ error: 'Could not retrieve affected row count' });
-        return res.json({ message: 'Deleted successfully', rowsAffectedId: rows[0] });
+        const { password, ...data} = rows[0];
+        return res.json({ message: 'Deleted successfully', data: data });
     } catch (error: any) {
         return res.status(500).json({ error: error.message });
     }
