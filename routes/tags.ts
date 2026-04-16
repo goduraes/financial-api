@@ -27,7 +27,8 @@ router.post('/add', authMiddleware(), async (req: Request, res: Response) => {
 
     try {
         const { rows } = await pool.query('INSERT INTO tags (name, color, user_id, created_at) VALUES ($1, $2, $3, $4) RETURNING *', [name, color, token.decoded.id, new Date()]);
-        res.json({ data: rows });
+        if (!rows.length) return res.status(500).json({ error: 'Não foi possível recuperar a linha inserida' });
+        res.json({ data: rows[0] });
     } catch (error: any) {
         return res.status(500).json({ error: error.message });
     }
@@ -46,7 +47,8 @@ router.put('/edit', authMiddleware(), async (req: Request, res: Response) => {
 
     try {
         const { rows }: any = await pool.query('UPDATE tags SET name = $1, color = $2, updated_at = $3 WHERE id = $4 RETURNING *', [name, color, new Date(), id]);
-        res.json({ data: rows });
+        if (!rows.length) return res.status(500).json({ error: 'Não foi possível recuperar a linha editada' });
+        res.json({ data: rows[0] });
     } catch (error: any) {
         return res.status(500).json({ error: error.message });
     }
