@@ -26,7 +26,7 @@ router.post('/add', authMiddleware(), async (req: Request, res: Response) => {
     const { name, color } = req.body;
 
     try {
-        const { rows } = await pool.query('INSERT INTO users (name, color, user_id, created_at) VALUES ($1, $2, $3, $4) RETURNING *', [name, color, token.decoded.id, new Date()]);
+        const { rows } = await pool.query('INSERT INTO tags (name, color, user_id, created_at) VALUES ($1, $2, $3, $4) RETURNING *', [name, color, token.decoded.id, new Date()]);
         res.json({ data: rows });
     } catch (error: any) {
         return res.status(500).json({ error: error.message });
