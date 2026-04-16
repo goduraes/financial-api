@@ -7,7 +7,7 @@ import pool from '../db';
 const bcrypt = require('bcryptjs');
 
 // All users
-router.get('/', async (req: Request, res: Response) => {
+router.get('/', authMiddleware(true), async (req: Request, res: Response) => {
     const { page = 1, perPage = 10, search = '' } = req.query;
   
     const limit = Number(perPage);
@@ -61,7 +61,7 @@ router.get('/', async (req: Request, res: Response) => {
 router.get('/:id', authMiddleware(true), async (req: Request, res: Response) => {
     try {
         const { rows }: any = await pool.query('SELECT * FROM users WHERE id = $1', [req.params.id]);
-        if (!rows.length) return res.status(404).json({ error: 'Users not found' });
+        if (!rows.length) return res.status(404).json({ error: 'Usuário não encontrado' });
         const { password, ...data} = rows[0];
         return res.json({ data: data });
     } catch (error: any) {
@@ -73,7 +73,7 @@ router.get('/:id', authMiddleware(true), async (req: Request, res: Response) => 
 router.get('/:email', authMiddleware(true), async (req: Request, res: Response) => {
     try {
         const { rows }: any = await pool.query('SELECT * FROM users WHERE email = $1', [req.params.email]);
-        if (!rows.length) return res.status(404).json({ error: 'Users not found' });
+        if (!rows.length) return res.status(404).json({ error: 'Usuário não encontrado' });
         const { password, ...data} = rows[0];
         return res.json({ data: data });
     } catch (error: any) {
@@ -91,9 +91,9 @@ router.post('/add', async (req: Request, res: Response) => {
         const user: any = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
         if (user.rows.length) return res.status(409).json({ message: 'E-mail já cadastrado!' });
         const { rows } = await pool.query('INSERT INTO users (name, email, password, created_at) VALUES ($1, $2, $3, $4) RETURNING *', [name, email, hashedPassword, new Date()]);
-        if (!rows.length) return res.status(500).json({ error: 'Could not retrieve inserted row id' });
+        if (!rows.length) return res.status(500).json({ error: 'Não foi possível recuperar a linha inserida' });
         const { password, ...data} = rows[0];
-        return res.status(201).json({ data: data, message: 'Row added successfully' });
+        return res.status(201).json({ data: data, message: 'Usuário adicionado com sucesso' });
     } catch (error: any) {
         return res.status(500).json({ error: error.message });
     }
@@ -103,9 +103,9 @@ router.post('/add', async (req: Request, res: Response) => {
 router.delete('/:id', authMiddleware(true), async (req: Request, res: Response) => {
     try {
         const { rows }: any = await pool.query('DELETE FROM users WHERE id = $1', [req.params.id]);
-        if (!rows.length) return res.status(500).json({ error: 'Could not retrieve affected row count' });
+        if (!rows.length) return res.status(500).json({ error: 'Não foi possível recuperar a linha removida' });
         const { password, ...data} = rows[0];
-        return res.json({ message: 'Deleted successfully', data: data });
+        return res.json({ message: 'Usuário excluído com sucesso', data: data });
     } catch (error: any) {
         return res.status(500).json({ error: error.message });
     }

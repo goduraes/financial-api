@@ -11,12 +11,12 @@ router.post('/', async (req: Request, res: Response) => {
 
     try {
         const { rows }: any = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
-        if (!rows.length) return res.status(404).json({ error: 'User not found' });
+        if (!rows.length) return res.status(404).json({ error: 'Usuário não encontrado' });
 
         const row = rows[0];
         
         const isMatch = await bcrypt.compare(password, row.password);
-        if (!isMatch) return res.status(401).json({ error: 'Invalid password' });
+        if (!isMatch) return res.status(401).json({ error: 'Senha inválida' });
     
         const userPayload = { id: row.id, name: row.name, email: row.email, role: row.role };
         const token = jwt.sign(userPayload, process.env.JWTSECRETKEY, { expiresIn: '1h' });
