@@ -10,7 +10,7 @@ router.post('/', async (req: Request, res: Response) => {
     const { email, password } = req.body;
 
     try {
-        const { rows }: any = await pool.query('SELECT password FROM users WHERE email = $1', [email]);
+        const { rows }: any = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
         if (!rows.length) return res.status(404).json({ error: 'User not found' });
 
         const row = rows[0];
