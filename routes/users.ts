@@ -32,7 +32,7 @@ router.get('/', authMiddleware(true), async (req: Request, res: Response) => {
       // 📄 dados paginados
       const { rows } = await pool.query(
         `
-        SELECT id, name, email, role, created_at, updated_at
+        SELECT id, name, email, role, is_active, created_at, updated_at
         FROM users
         WHERE 
           name ILIKE '%' || $1 || '%'
@@ -99,16 +99,30 @@ router.post('/add', async (req: Request, res: Response) => {
     }
 });
 
-// Remove user
-router.delete('/:id', authMiddleware(true), async (req: Request, res: Response) => {
+// disable user
+router.patch('/disable/:id', authMiddleware(true), async (req: Request, res: Response) => {
+    const { is_active } = req.body;
     try {
-        const { rows }: any = await pool.query('DELETE FROM users WHERE id = $1 RETURNING *', [req.params.id]);
+        const { rows }: any = await pool.query('UPDATE users SET is_active = $1 WHERE id = $2 RETURNING *', [is_active, req.params.id]);
         if (!rows.length) return res.status(500).json({ error: 'Não foi possível recuperar a linha removida' });
         const { password, ...data} = rows[0];
-        return res.json({ message: 'Usuário excluído com sucesso', data: data });
+        return res.json({ message: `Usuário ${is_active ? 'ativado' : 'desativado'} com sucesso`, data: data });
     } catch (error: any) {
         return res.status(500).json({ error: error.message });
     }
+});
+
+// change role user
+router.patch('/disable/:id', authMiddleware(true), async (req: Request, res: Response) => {
+  const { role } = req.body;
+  try {
+      const { rows }: any = await pool.query('UPDATE users SET role = $1 WHERE id = $2 RETURNING *', [role, req.params.id]);
+      if (!rows.length) return res.status(500).json({ error: 'Não foi possível recuperar a linha removida' });
+      const { password, ...data} = rows[0];
+      return res.json({ message: `Role do usuário alterada com sucesso`, data: data });
+  } catch (error: any) {
+      return res.status(500).json({ error: error.message });
+  }
 });
    
 export default router;
