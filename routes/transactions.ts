@@ -20,7 +20,7 @@ router.get('/', authMiddleware(), async (req: Request, res: Response) => {
       perPage = 10,
     } = req.query;
 
-    const tagIds = typeof tags === "string" ? tags.split(",").map(Number) : []
+    const tagIds = tags && typeof tags === "string" ? tags.split(",").map(Number) : [];
   
     const limit = Number(perPage);
     const currentPage = Number(page);
@@ -52,8 +52,7 @@ router.get('/', authMiddleware(), async (req: Request, res: Response) => {
                     OR t.date < ($4::date + INTERVAL '1 day')
                 )
                 AND (
-                    $5 IS NULL
-                    OR COALESCE(array_length($5::int[], 1), 0) = 0
+                    COALESCE(array_length($5::int[], 1), 0) = 0
                     OR t.tag_id = ANY($5::int[])
                 )
             `,
@@ -88,8 +87,7 @@ router.get('/', authMiddleware(), async (req: Request, res: Response) => {
                     OR t.date < ($4::date + INTERVAL '1 day')
                 )
                 AND (
-                    $5 IS NULL
-                    OR COALESCE(array_length($5::int[], 1), 0) = 0
+                    COALESCE(array_length($5::int[], 1), 0) = 0
                     OR t.tag_id = ANY($5::int[])
                 )
             ORDER BY t.created_at DESC
