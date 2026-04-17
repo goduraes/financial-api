@@ -19,7 +19,7 @@ router.get('/', authMiddleware(), async (req: Request, res: Response) => {
             LEFT JOIN tags tag ON tag.id = t.tag_id
             WHERE t.user_id = $1;    
         `, [token.decoded.id]);
-        res.json({ data: rows[0] });
+        res.json({ data: rows });
     } catch (error: any) {
         return res.status(500).json({ error: error.message });
     }
