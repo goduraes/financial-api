@@ -102,7 +102,7 @@ router.post('/add', async (req: Request, res: Response) => {
 // Remove user
 router.delete('/:id', authMiddleware(true), async (req: Request, res: Response) => {
     try {
-        const { rows }: any = await pool.query('DELETE FROM users WHERE id = $1', [req.params.id]);
+        const { rows }: any = await pool.query('DELETE FROM users WHERE id = $1 RETURNING *', [req.params.id]);
         if (!rows.length) return res.status(500).json({ error: 'Não foi possível recuperar a linha removida' });
         const { password, ...data} = rows[0];
         return res.json({ message: 'Usuário excluído com sucesso', data: data });

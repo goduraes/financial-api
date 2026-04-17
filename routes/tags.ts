@@ -66,7 +66,7 @@ router.delete('/:id', authMiddleware(), async (req: Request, res: Response) => {
     if (tagUserId !== token.decoded.id) return res.status(403).json({ error: 'Você não tem permissão' });
 
     try {
-        const { rows }: any = await pool.query('DELETE FROM tags WHERE id = $1', [req.params.id]);
+        const { rows }: any = await pool.query('DELETE FROM tags WHERE id = $1 RETURNING *', [req.params.id]);
         if (!rows.length) return res.status(500).json({ error: 'Não foi possível recuperar a linha removida' });
         return res.json({ message: 'Tag excluída com sucesso', data: rows[0] });
     } catch (error: any) {
