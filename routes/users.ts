@@ -100,7 +100,7 @@ router.post('/add', async (req: Request, res: Response) => {
 });
 
 // disable user
-router.patch('/disable/:id', authMiddleware(true), async (req: Request, res: Response) => {
+router.patch('/toggle-status/:id', authMiddleware(true), async (req: Request, res: Response) => {
     const { is_active } = req.body;
     try {
         const { rows }: any = await pool.query('UPDATE users SET is_active = $1 WHERE id = $2 RETURNING *', [is_active, req.params.id]);
@@ -113,7 +113,7 @@ router.patch('/disable/:id', authMiddleware(true), async (req: Request, res: Res
 });
 
 // change role user
-router.patch('/disable/:id', authMiddleware(true), async (req: Request, res: Response) => {
+router.patch('/change-role/:id', authMiddleware(true), async (req: Request, res: Response) => {
   const { role } = req.body;
   try {
       const { rows }: any = await pool.query('UPDATE users SET role = $1 WHERE id = $2 RETURNING *', [role, req.params.id]);
