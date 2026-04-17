@@ -14,7 +14,7 @@ router.get('/', authMiddleware(), async (req: Request, res: Response) => {
         const { rows }: any = await pool.query(`
             SELECT 
                 t.*,
-                tag.name AS tag_name
+                tag.name AS tag_name,
                 tag.color AS tag_color
             FROM transactions t
             LEFT JOIN tags tag ON tag.id = t.tag_id
