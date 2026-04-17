@@ -83,7 +83,7 @@ router.get('/', authMiddleware(), async (req: Request, res: Response) => {
                 AND (
                     $4::date IS NULL
                     OR t.date < ($4::date + INTERVAL '1 day')
-                );
+                )
                 AND (
                     $5::int[] IS NULL
                     OR t.tag_id = ANY($5)
