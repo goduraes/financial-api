@@ -9,18 +9,99 @@ import { extractBearerToken } from '../helpers/extractBearerToken';
 router.get('/', authMiddleware(), async (req: Request, res: Response) => {
     const token = extractBearerToken(req.headers.authorization);
     if ("error" in token) return res.status(401).json({ error: token.error });
+
+    const {
+      search,
+      type,
+      startDate,
+      endDate,
+      tags,
+      page = 1,
+      perPage = 10,
+    } = req.query;
+  
+    const limit = Number(perPage);
+    const currentPage = Number(page);
+    const offset = (currentPage - 1) * limit;
     
     try {
-        const { rows }: any = await pool.query(`
+        // 🔢 total de registros
+        const countResult = await pool.query(
+            `
+                SELECT COUNT(*) AS total
+                FROM transactions t
+                LEFT JOIN tags tag ON tag.id = t.tag_id
+                WHERE t.user_id = $6
+                AND (
+                    $1::text IS NULL
+                    OR t.description ILIKE '%' || $1 || '%'
+                    OR tag.name ILIKE '%' || $1 || '%'
+                )
+                AND (
+                    $2::text IS NULL
+                    OR t.type = $2
+                )
+                AND (
+                    $3::date IS NULL
+                    OR t.date >= $3
+                )
+                AND (
+                    $4::date IS NULL
+                    OR t.date < ($4::date + INTERVAL '1 day')
+                )
+                AND (
+                    $5::int[] IS NULL
+                    OR t.tag_id = ANY($5)
+                );
+            `,
+            [search, type, startDate, endDate, tags, token.decoded.id]
+        );
+    
+        const total = Number(countResult.rows[0].count);
+
+        const { rows }: any = await pool.query(
+          `
             SELECT 
                 t.*,
                 tag.name AS tag_name,
                 tag.color AS tag_color
             FROM transactions t
             LEFT JOIN tags tag ON tag.id = t.tag_id
-            WHERE t.user_id = $1;    
-        `, [token.decoded.id]);
-        res.json({ data: rows });
+            WHERE t.user_id = $8
+                AND (
+                    $1::text IS NULL 
+                    OR t.description ILIKE '%' || $1 || '%'
+                )
+                AND (
+                    $2::text IS NULL
+                    OR t.type = $2
+                )
+                AND (
+                    $3::date IS NULL
+                    OR t.date >= $3
+                )
+                AND (
+                    $4::date IS NULL
+                    OR t.date < ($4::date + INTERVAL '1 day')
+                );
+                AND (
+                    $5::int[] IS NULL
+                    OR t.tag_id = ANY($5)
+                )
+            ORDER BY t.created_at DESC
+            LIMIT $6
+            OFFSET $7
+        `,
+          [search, type, startDate, endDate, tags, limit, offset, token.decoded.id],
+        );
+
+        return res.json({
+            data: rows,
+            page: currentPage,
+            perPage: limit,
+            total,
+            totalPages: Math.ceil(total / limit),
+        });
     } catch (error: any) {
         return res.status(500).json({ error: error.message });
     }
