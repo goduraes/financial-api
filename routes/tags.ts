@@ -41,9 +41,10 @@ router.put('/edit', authMiddleware(), async (req: Request, res: Response) => {
     
     const { id, name, color } = req.body;
 
-    const { tag }: any = await pool.query('SELECT * FROM tags WHERE id = $1', [id]);
-    if (!tag) return res.status(403).json({ error: 'Tag não encontrada' });
-    if (tag.user_id !== token.decoded.id) return res.status(403).json({ error: 'Você não tem permissão' });
+    const tag: any = await pool.query('SELECT * FROM tags WHERE id = $1', [id]);
+    if (!tag.rows.length) return res.status(403).json({ error: 'Tag não encontrada' });
+    const tagUserId = tag.rows[0].user_id;
+    if (tagUserId !== token.decoded.id) return res.status(403).json({ error: 'Você não tem permissão' });
 
     try {
         const { rows }: any = await pool.query('UPDATE tags SET name = $1, color = $2, updated_at = $3 WHERE id = $4 RETURNING *', [name, color, new Date(), id]);
