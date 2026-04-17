@@ -42,4 +42,44 @@ router.post('/add', authMiddleware(), async (req: Request, res: Response) => {
     }
 });
 
+//edit
+router.put('/edit', authMiddleware(), async (req: Request, res: Response) => {
+    const token = extractBearerToken(req.headers.authorization);
+    if ("error" in token) return res.status(401).json({ error: token.error });
+    
+    const { id, description, value, date, tag_id, type } = req.body;
+
+    const transactions: any = await pool.query('SELECT * FROM transactions WHERE id = $1', [id]);
+    if (!transactions.rows.length) return res.status(403).json({ error: 'Transação não encontrada' });
+    const tagUserId = transactions.rows[0].user_id;
+    if (tagUserId !== token.decoded.id) return res.status(403).json({ error: 'Você não tem permissão' });
+
+    try {
+        const { rows }: any = await pool.query('UPDATE transactions SET description = $1, value = $2, date = $3, tag_id = $4, type = $5, updated_at = $6 WHERE id = $7 RETURNING *', [description, value, date, tag_id, type, new Date(), id]);
+        if (!rows.length) return res.status(500).json({ error: 'Não foi possível recuperar a linha editada' });
+        res.json({ data: rows[0] });
+    } catch (error: any) {
+        return res.status(500).json({ error: error.message });
+    }
+});
+
+// delete
+router.delete('/:id', authMiddleware(), async (req: Request, res: Response) => {
+    const token = extractBearerToken(req.headers.authorization);
+    if ("error" in token) return res.status(401).json({ error: token.error });
+
+    const transactions: any = await pool.query('SELECT * FROM transactions WHERE id = $1', [req.params.id]);
+    if (!transactions.rows.length) return res.status(403).json({ error: 'Transação não encontrada' });
+    const tagUserId = transactions.rows[0].user_id;
+    if (tagUserId !== token.decoded.id) return res.status(403).json({ error: 'Você não tem permissão' });
+
+    try {
+        const { rows }: any = await pool.query('DELETE FROM transactions WHERE id = $1 RETURNING *', [req.params.id]);
+        if (!rows.length) return res.status(500).json({ error: 'Não foi possível recuperar a linha removida' });
+        return res.json({ message: 'Transação excluída com sucesso', data: rows[0] });
+    } catch (error: any) {
+        return res.status(500).json({ error: error.message });
+    }
+});
+
 export default router;
