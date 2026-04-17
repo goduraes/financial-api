@@ -6,6 +6,7 @@ import authRoutes from './routes/auth';
 import meRoutes from './routes/me';
 import userRoutes from './routes/users';
 import tagsRoutes from './routes/tags';
+import transactionsRoutes from './routes/transactions';
 
 const app = express();
 
@@ -19,6 +20,7 @@ app.use('/auth', authRoutes);
 app.use('/me', meRoutes);
 app.use('/users', userRoutes);
 app.use('/tags', tagsRoutes);
+app.use('/transactions', transactionsRoutes);
 
 app.listen(process.env.PORT || 3000, () => {
   console.log(`Servidor rodando em http://localhost:${process.env.PORT}`);
