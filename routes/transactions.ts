@@ -20,7 +20,7 @@ router.get('/', authMiddleware(), async (req: Request, res: Response) => {
       perPage = 10,
     } = req.query;
 
-    const tagArray = Array.isArray(tags) ? tags.map(String) : typeof tags === "string" ? tags.split(","): []
+    const tagIds = typeof tags === "string" ? tags.split(",").map(Number) : []
   
     const limit = Number(perPage);
     const currentPage = Number(page);
@@ -56,7 +56,7 @@ router.get('/', authMiddleware(), async (req: Request, res: Response) => {
                     OR t.tag_id = ANY($5)
                 );
             `,
-            [search, type, startDate, endDate, tagArray, token.decoded.id]
+            [search, type, startDate, endDate, tagIds, token.decoded.id]
         );
     
         const total = Number(countResult.rows[0].count);
@@ -94,7 +94,7 @@ router.get('/', authMiddleware(), async (req: Request, res: Response) => {
             LIMIT $6
             OFFSET $7
         `,
-          [search, type, startDate, endDate, tagArray, limit, offset, token.decoded.id],
+          [search, type, startDate, endDate, tagIds, limit, offset, token.decoded.id],
         );
 
         return res.json({
