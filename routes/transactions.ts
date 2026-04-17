@@ -113,8 +113,10 @@ router.get('/', authMiddleware(), async (req: Request, res: Response) => {
           [search, type, startDate, endDate, tagIds, limit, offset, token.decoded.id],
         );
 
+        if (!rows.length) return res.status(500).json({ error: 'Não foi possível recuperar os dados' });
+
         return res.json({
-            data: rows,
+            data: rows[0],
             page: currentPage,
             perPage: limit,
             total,
