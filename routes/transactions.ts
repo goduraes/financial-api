@@ -75,7 +75,7 @@ router.get('/', authMiddleware(), async (req: Request, res: Response) => {
                     OR t.description ILIKE '%' || $1 || '%'
                 )
                 AND (
-                    $2::text IS NULL
+                    NULLIF($2, '') IS NULL
                     OR t.type = $2
                 )
                 AND (
