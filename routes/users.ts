@@ -104,7 +104,7 @@ router.patch('/toggle-status/:id', authMiddleware(true), async (req: Request, re
     const { is_active } = req.body;
     try {
         const { rows }: any = await pool.query('UPDATE users SET is_active = $1 WHERE id = $2 RETURNING *', [is_active, req.params.id]);
-        if (!rows.length) return res.status(500).json({ error: 'Não foi possível recuperar a linha removida' });
+        if (!rows.length) return res.status(500).json({ error: 'Não foi possível recuperar a linha alterada' });
         const { password, ...data} = rows[0];
         return res.json({ message: `Usuário ${is_active ? 'ativado' : 'desativado'} com sucesso`, data: data });
     } catch (error: any) {
@@ -117,7 +117,7 @@ router.patch('/change-role/:id', authMiddleware(true), async (req: Request, res:
   const { role } = req.body;
   try {
       const { rows }: any = await pool.query('UPDATE users SET role = $1 WHERE id = $2 RETURNING *', [role, req.params.id]);
-      if (!rows.length) return res.status(500).json({ error: 'Não foi possível recuperar a linha removida' });
+      if (!rows.length) return res.status(500).json({ error: 'Não foi possível recuperar a linha alterada' });
       const { password, ...data} = rows[0];
       return res.json({ message: `Role do usuário alterada com sucesso`, data: data });
   } catch (error: any) {

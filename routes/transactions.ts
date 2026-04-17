@@ -90,7 +90,7 @@ router.get('/', authMiddleware(), async (req: Request, res: Response) => {
                     COALESCE(array_length($5::int[], 1), 0) = 0
                     OR t.tag_id = ANY($5::int[])
                 )
-            ORDER BY t.created_at DESC
+            ORDER BY t.date DESC
             LIMIT $6
             OFFSET $7
         `,
