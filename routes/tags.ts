@@ -11,7 +11,7 @@ router.get('/', authMiddleware(), async (req: Request, res: Response) => {
     if ("error" in token) return res.status(401).json({ error: token.error });
     
     try {
-        const { rows }: any = await pool.query('SELECT * FROM tags WHERE id = $1', [token.decoded.id]);
+        const { rows }: any = await pool.query('SELECT * FROM tags WHERE user_id = $1', [token.decoded.id]);
         res.json({ data: rows });
     } catch (error: any) {
         return res.status(500).json({ error: error.message });
