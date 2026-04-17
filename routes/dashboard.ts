@@ -13,9 +13,9 @@ router.get('/summary', authMiddleware(), async (req: Request, res: Response) => 
     try {
         const { rows }: any = await pool.query(`
             SELECT
-                SUM(CASE WHEN type = 'INCOME' THEN value ELSE 0 END) AS total_income,
-                SUM(CASE WHEN type = 'EXPENSE' THEN value ELSE 0 END) AS total_expense,
-                SUM(CASE WHEN type = 'INCOME' THEN value ELSE -value END) AS balance
+                SUM(CASE WHEN type = 'INCOME' THEN value ELSE 0 END)::FLOAT AS total_income,
+                SUM(CASE WHEN type = 'EXPENSE' THEN value ELSE 0 END)::FLOAT AS total_expense,
+                SUM(CASE WHEN type = 'INCOME' THEN value ELSE -value END)::FLOAT AS balance
             FROM transactions
             WHERE user_id = $1
         `, [token.decoded.id]);
