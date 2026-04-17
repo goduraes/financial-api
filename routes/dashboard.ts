@@ -15,7 +15,7 @@ router.get('/summary', authMiddleware(), async (req: Request, res: Response) => 
                 COALESCE(SUM(CASE WHEN type = 'INCOME' THEN value ELSE 0 END), 0)::FLOAT AS total_income,
                 COALESCE(SUM(CASE WHEN type = 'EXPENSE' THEN value ELSE 0 END), 0)::FLOAT AS total_expense,
                 COALESCE(SUM(CASE WHEN type = 'INCOME' THEN value ELSE -value END), 0)::FLOAT AS balance
-            FROM filtered
+            FROM transactions
             WHERE user_id = $1
         `, [token.decoded.id]);
 
