@@ -28,7 +28,7 @@ router.get('/', authMiddleware(), async (req: Request, res: Response) => {
         // 🔢 total de registros
         const countResult = await pool.query(
             `
-                SELECT COUNT(*) AS total
+                SELECT COUNT(*)
                 FROM transactions t
                 LEFT JOIN tags tag ON tag.id = t.tag_id
                 WHERE t.user_id = $6
