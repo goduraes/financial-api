@@ -60,9 +60,10 @@ router.delete('/:id', authMiddleware(), async (req: Request, res: Response) => {
     const token = extractBearerToken(req.headers.authorization);
     if ("error" in token) return res.status(401).json({ error: token.error });
 
-    const { tag }: any = await pool.query('SELECT * FROM tags WHERE id = $1', [req.params.id]);
-    if (!tag) return res.status(403).json({ error: 'Tag não encontrada' });
-    if (tag.user_id !== token.decoded.id) return res.status(403).json({ error: 'Você não tem permissão' });
+    const tag: any = await pool.query('SELECT * FROM tags WHERE id = $1', [req.params.id]);
+    if (!tag.rows.length) return res.status(403).json({ error: 'Tag não encontrada' });
+    const tagUserId = tag.rows[0].user_id;
+    if (tagUserId !== token.decoded.id) return res.status(403).json({ error: 'Você não tem permissão' });
 
     try {
         const { rows }: any = await pool.query('DELETE FROM tags WHERE id = $1', [req.params.id]);
