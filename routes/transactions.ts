@@ -87,28 +87,32 @@ router.get('/', authMiddleware(), async (req: Request, res: Response) => {
                     COALESCE(array_length($5::int[], 1), 0) = 0
                     OR t.tag_id = ANY($5::int[])
                 )
-            ),
+        ),
 
-            summary AS (
-                SELECT
-                    SUM(CASE WHEN type = 'INCOME' THEN value ELSE 0 END) AS total_income,
-                    SUM(CASE WHEN type = 'EXPENSE' THEN value ELSE 0 END) AS total_expense,
-                    SUM(CASE WHEN type = 'INCOME' THEN value ELSE -value END) AS balance
-                FROM filtered
-            ),
-
-            paginated AS (
-                SELECT *
-                FROM filtered
-                ORDER BY date DESC
-                LIMIT $6
-                OFFSET $7
-            )
-
+        summary AS (
             SELECT
-                (SELECT row_to_json(summary) FROM summary) AS summary,
-                COALESCE(json_agg(paginated ORDER BY date DESC), '[]') AS transactions
-            FROM paginated;
+                SUM(CASE WHEN type = 'INCOME' THEN value ELSE 0 END) AS total_income,
+                SUM(CASE WHEN type = 'EXPENSE' THEN value ELSE 0 END) AS total_expense,
+                SUM(CASE WHEN type = 'INCOME' THEN value ELSE -value END) AS balance
+            FROM filtered
+        ),
+
+        paginated AS (
+            SELECT
+                f.*,
+                tag.name AS tag_name,
+                tag.color AS tag_color
+            FROM filtered f
+            LEFT JOIN tags tag ON tag.id = f.tag_id
+            ORDER BY f.date DESC
+            LIMIT $6
+            OFFSET $7
+        )
+
+        SELECT
+            (SELECT row_to_json(summary) FROM summary) AS summary,
+            COALESCE(json_agg(paginated ORDER BY date DESC), '[]') AS transactions
+        FROM paginated;
         `,
           [search, type, startDate, endDate, tagIds, limit, offset, token.decoded.id],
         );
