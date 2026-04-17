@@ -15,6 +15,7 @@ router.get('/', authMiddleware(), async (req: Request, res: Response) => {
             SELECT 
                 t.*,
                 tag.name AS tag_name
+                tag.color AS tag_color
             FROM transactions t
             LEFT JOIN tags tag ON tag.id = t.tag_id
             WHERE t.user_id = $1;    
