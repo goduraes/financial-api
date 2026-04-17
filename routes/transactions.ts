@@ -27,7 +27,6 @@ router.get('/', authMiddleware(), async (req: Request, res: Response) => {
     const offset = (currentPage - 1) * limit;
     
     try {
-        // 🔢 total de registros
         const countResult = await pool.query(
             `
                 SELECT COUNT(*)
@@ -62,16 +61,14 @@ router.get('/', authMiddleware(), async (req: Request, res: Response) => {
         const total = Number(countResult.rows[0].count);
 
         const { rows }: any = await pool.query(
-          `
-            SELECT 
-                t.*,
-                tag.name AS tag_name,
-                tag.color AS tag_color
+        `
+            WITH filtered AS (
+            SELECT
+                t.*
             FROM transactions t
-            LEFT JOIN tags tag ON tag.id = t.tag_id
             WHERE t.user_id = $8
                 AND (
-                    $1::text IS NULL 
+                    $1::text IS NULL
                     OR t.description ILIKE '%' || $1 || '%'
                 )
                 AND (
@@ -90,9 +87,28 @@ router.get('/', authMiddleware(), async (req: Request, res: Response) => {
                     COALESCE(array_length($5::int[], 1), 0) = 0
                     OR t.tag_id = ANY($5::int[])
                 )
-            ORDER BY t.date DESC
-            LIMIT $6
-            OFFSET $7
+            ),
+
+            summary AS (
+                SELECT
+                    SUM(CASE WHEN type = 'INCOME' THEN value ELSE 0 END) AS total_income,
+                    SUM(CASE WHEN type = 'EXPENSE' THEN value ELSE 0 END) AS total_expense,
+                    SUM(CASE WHEN type = 'INCOME' THEN value ELSE -value END) AS balance
+                FROM filtered
+            ),
+
+            paginated AS (
+                SELECT *
+                FROM filtered
+                ORDER BY date DESC
+                LIMIT $6
+                OFFSET $7
+            )
+
+            SELECT
+                (SELECT row_to_json(summary) FROM summary) AS summary,
+                COALESCE(json_agg(paginated ORDER BY date DESC), '[]') AS transactions
+            FROM paginated;
         `,
           [search, type, startDate, endDate, tagIds, limit, offset, token.decoded.id],
         );

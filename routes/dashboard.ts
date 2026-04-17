@@ -6,7 +6,6 @@ import pool from '../db';
 import { extractBearerToken } from '../helpers/extractBearerToken';
 
 router.get('/summary', authMiddleware(), async (req: Request, res: Response) => {
-    console.log(1)
     const token = extractBearerToken(req.headers.authorization);
     if ("error" in token) return res.status(401).json({ error: token.error });
     
