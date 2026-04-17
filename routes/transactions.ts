@@ -38,15 +38,15 @@ router.get('/', authMiddleware(), async (req: Request, res: Response) => {
                     OR tag.name ILIKE '%' || $1 || '%'
                 )
                 AND (
-                    $2::text IS NULL
+                    NULLIF($2, '') IS NULL
                     OR t.type = $2
                 )
                 AND (
-                    $3::date IS NULL
+                    NULLIF($3, '') IS NULL
                     OR t.date >= $3
                 )
                 AND (
-                    $4::date IS NULL
+                    NULLIF($4, '') IS NULL
                     OR t.date < ($4::date + INTERVAL '1 day')
                 )
                 AND (
