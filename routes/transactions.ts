@@ -91,9 +91,9 @@ router.get('/', authMiddleware(), async (req: Request, res: Response) => {
 
         summary AS (
             SELECT
-                SUM(CASE WHEN type = 'INCOME' THEN value ELSE 0 END) AS total_income,
-                SUM(CASE WHEN type = 'EXPENSE' THEN value ELSE 0 END) AS total_expense,
-                SUM(CASE WHEN type = 'INCOME' THEN value ELSE -value END) AS balance
+                COALESCE(SUM(CASE WHEN type = 'INCOME' THEN value ELSE 0 END), 0)::FLOAT AS total_income,
+                COALESCE(SUM(CASE WHEN type = 'EXPENSE' THEN value ELSE 0 END), 0)::FLOAT AS total_expense,
+                COALESCE(SUM(CASE WHEN type = 'INCOME' THEN value ELSE -value END), 0)::FLOAT AS balance
             FROM filtered
         ),
 
