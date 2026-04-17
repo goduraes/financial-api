@@ -79,11 +79,11 @@ router.get('/', authMiddleware(), async (req: Request, res: Response) => {
                     OR t.type = $2
                 )
                 AND (
-                    $3::date IS NULL
-                    OR t.date >= $3
+                    NULLIF($3, '') IS NULL
+                    OR t.date >= $3::date
                 )
                 AND (
-                    $4::date IS NULL
+                    NULLIF($4, '') IS NULL
                     OR t.date < ($4::date + INTERVAL '1 day')
                 )
                 AND (
