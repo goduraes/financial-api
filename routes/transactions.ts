@@ -52,9 +52,10 @@ router.get('/', authMiddleware(), async (req: Request, res: Response) => {
                     OR t.date < ($4::date + INTERVAL '1 day')
                 )
                 AND (
-                    $5::int[] IS NULL
-                    OR t.tag_id = ANY($5)
-                );
+                    $5 IS NULL
+                    OR COALESCE(array_length($5::int[], 1), 0) = 0
+                    OR t.tag_id = ANY($5::int[])
+                )
             `,
             [search, type, startDate, endDate, tagIds, token.decoded.id]
         );
@@ -87,8 +88,9 @@ router.get('/', authMiddleware(), async (req: Request, res: Response) => {
                     OR t.date < ($4::date + INTERVAL '1 day')
                 )
                 AND (
-                    $5::int[] IS NULL
-                    OR t.tag_id = ANY($5)
+                    $5 IS NULL
+                    OR COALESCE(array_length($5::int[], 1), 0) = 0
+                    OR t.tag_id = ANY($5::int[])
                 )
             ORDER BY t.created_at DESC
             LIMIT $6
