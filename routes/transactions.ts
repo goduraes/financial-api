@@ -45,7 +45,7 @@ router.get('/', authMiddleware(), async (req: Request, res: Response) => {
                 )
                 AND (
                     NULLIF($3, '') IS NULL
-                    OR t.date >= $3
+                    OR t.date >= $3::date
                 )
                 AND (
                     NULLIF($4, '') IS NULL
