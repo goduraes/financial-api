@@ -18,6 +18,8 @@ router.get('/', authMiddleware(), async (req: Request, res: Response) => {
       tags,
       page = 1,
       perPage = 10,
+      sortBy,
+      order,
     } = req.query;
 
     const tagIds = tags && typeof tags === "string" ? tags.split(",").map(Number) : [];
@@ -62,11 +64,11 @@ router.get('/', authMiddleware(), async (req: Request, res: Response) => {
 
         const { rows }: any = await pool.query(
         `
-            WITH filtered AS (
+        WITH filtered AS (
             SELECT
                 t.*
             FROM transactions t
-            WHERE t.user_id = $8
+            WHERE t.user_id = $10
                 AND (
                     $1::text IS NULL
                     OR t.description ILIKE '%' || $1 || '%'
@@ -87,34 +89,54 @@ router.get('/', authMiddleware(), async (req: Request, res: Response) => {
                     COALESCE(array_length($5::int[], 1), 0) = 0
                     OR t.tag_id = ANY($5::int[])
                 )
-        ),
+            ),
 
-        summary AS (
+            summary AS (
+                SELECT
+                    COALESCE(SUM(CASE WHEN type = 'INCOME' THEN value ELSE 0 END), 0)::FLOAT AS total_income,
+                    COALESCE(SUM(CASE WHEN type = 'EXPENSE' THEN value ELSE 0 END), 0)::FLOAT AS total_expense,
+                    COALESCE(SUM(CASE WHEN type = 'INCOME' THEN value ELSE -value END), 0)::FLOAT AS balance
+                FROM filtered
+            ),
+
+            paginated AS (
+                SELECT
+                    f.*,
+                    tag.name AS tag_name,
+                    tag.color AS tag_color
+                FROM filtered f
+                LEFT JOIN tags tag ON tag.id = f.tag_id
+                ORDER BY
+                    CASE WHEN $8 = 'description' AND $9 = 'asc' THEN f.description END ASC,
+                    CASE WHEN $8 = 'description' AND $9 = 'desc' THEN f.description END DESC,
+
+                    CASE 
+                        WHEN $8 = 'value' AND $9 = 'asc' 
+                        THEN CASE WHEN f.type = 'EXPENSE' THEN -f.value ELSE f.value END 
+                    END ASC,
+
+                    CASE 
+                        WHEN $8 = 'value' AND $9 = 'desc' 
+                        THEN CASE WHEN f.type = 'EXPENSE' THEN -f.value ELSE f.value END 
+                    END DESC,
+
+                    CASE WHEN $8 = 'date' AND $9 = 'asc' THEN f.date END ASC,
+                    CASE WHEN $8 = 'date' AND $9 = 'desc' THEN f.date END DESC,
+
+                    CASE WHEN $8 = 'tag_name' AND $9 = 'asc' THEN tag.name END ASC,
+                    CASE WHEN $8 = 'tag_name' AND $9 = 'desc' THEN tag.name END DESC,
+
+                    f.date DESC
+                LIMIT $6
+                OFFSET $7
+            )
+
             SELECT
-                COALESCE(SUM(CASE WHEN type = 'INCOME' THEN value ELSE 0 END), 0)::FLOAT AS total_income,
-                COALESCE(SUM(CASE WHEN type = 'EXPENSE' THEN value ELSE 0 END), 0)::FLOAT AS total_expense,
-                COALESCE(SUM(CASE WHEN type = 'INCOME' THEN value ELSE -value END), 0)::FLOAT AS balance
-            FROM filtered
-        ),
-
-        paginated AS (
-            SELECT
-                f.*,
-                tag.name AS tag_name,
-                tag.color AS tag_color
-            FROM filtered f
-            LEFT JOIN tags tag ON tag.id = f.tag_id
-            ORDER BY f.date DESC
-            LIMIT $6
-            OFFSET $7
-        )
-
-        SELECT
-            (SELECT row_to_json(summary) FROM summary) AS summary,
-            COALESCE(json_agg(paginated ORDER BY date DESC), '[]') AS transactions
-        FROM paginated;
+                (SELECT row_to_json(summary) FROM summary) AS summary,
+                COALESCE(json_agg(paginated), '[]') AS transactions
+            FROM paginated;
         `,
-          [search, type, startDate, endDate, tagIds, limit, offset, token.decoded.id],
+          [search, type, startDate, endDate, tagIds, limit, offset, sortBy, order, token.decoded.id],
         );
 
         if (!rows.length) return res.status(500).json({ error: 'Não foi possível recuperar os dados' });
