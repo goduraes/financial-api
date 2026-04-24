@@ -49,7 +49,7 @@ router.patch('/edit-password', authMiddleware(), async (req: Request, res: Respo
         if (!user.rows.length) return res.status(409).json({ message: 'Usuário não encontrado!' });
         
         const isMatch = await bcrypt.compare(currentPassword, user.rows[0].password);
-        if (!isMatch) return res.status(401).json({ error: 'Senha atual inválida' });
+        if (!isMatch) return res.status(403).json({ error: 'Senha atual inválida' });
 
         const { rows }: any = await pool.query('UPDATE users SET password = $1, updated_at = $2 WHERE id = $3 RETURNING *', [hashedNewPassword, new Date(), token.decoded.id]);
         if (!rows.length) return res.status(500).json({ error: 'Não foi possível recuperar a linha editada' });
