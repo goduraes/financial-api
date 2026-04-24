@@ -45,7 +45,7 @@ router.patch('/edit-password', authMiddleware(), async (req: Request, res: Respo
         const { currentPassword, newPassword } = req.body;
         const hashedNewPassword = await bcrypt.hash(newPassword, 10);
 
-        const user: any = await pool.query('SELECT * FROM users WHERE email = $1', [token.decoded.id]);
+        const user: any = await pool.query('SELECT * FROM users WHERE id = $1', [token.decoded.id]);
         if (!user.rows.length) return res.status(409).json({ message: 'Usuário não encontrado!' });
         
         const isMatch = await bcrypt.compare(currentPassword, user.password);
