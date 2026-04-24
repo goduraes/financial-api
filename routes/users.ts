@@ -83,9 +83,8 @@ router.get('/:email', authMiddleware(true), async (req: Request, res: Response) 
 
 // Add user
 router.post('/add', async (req: Request, res: Response) => {
-    const saltRounds = 10;
     const { name, email, password } = req.body;
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     try {
         const user: any = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
