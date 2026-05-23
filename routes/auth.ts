@@ -18,7 +18,7 @@ router.post('/', async (req: Request, res: Response) => {
         if (!row.is_active) return res.status(403).json({ error: 'Esta conta foi bloqueada pelo administrador' });
         
         const isMatch = await bcrypt.compare(password, row.password);
-        if (!isMatch) return res.status(401).json({ error: 'Senha inválida' });
+        if (!isMatch) return res.status(400).json({ error: 'Senha inválida' });
     
         const userPayload = { id: row.id, name: row.name, email: row.email, role: row.role };
         const token = jwt.sign(userPayload, process.env.JWTSECRETKEY, { expiresIn: '1h' });
